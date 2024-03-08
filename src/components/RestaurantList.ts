@@ -1,12 +1,13 @@
+import EventComponent from "../abstract/EventComponent";
 import RestaurantItem from "./RestaurantItem";
+import FilterBar from "./FilterBar";
 import Restaurants from "../domain/Restaurants";
 import Restaurant, { RestaurantInfo } from "../domain/Restaurant";
-import FilterBar from "./FilterBar";
-import EventComponent from "../abstract/EventComponent";
-import { RESTAURANT_DISPLAYING_FILTER, SORT_FILTER } from "../constants/filter";
-import { FILTER_EVENT, RESTAURANT_EVENT } from "../constants/event";
+
 import { CategoryFilter, SortFilter } from "../types/Filter";
 import restaurantStore from "../store/restaurantStore";
+import { RESTAURANT_DISPLAYING_FILTER, SORT_FILTER } from "../constants/filter";
+import { FILTER_EVENT, RESTAURANT_EVENT } from "../constants/event";
 
 customElements.define("restaurant-item", RestaurantItem);
 customElements.define("filter-bar", FilterBar);
@@ -43,20 +44,23 @@ export default class RestaurantList extends EventComponent {
     return `
       <section class="restaurant-list-container">
         <ul class="restaurant-list">
-          ${displayingRestaurantInfos
-            .map(
-              ({
-                name,
-                category,
-                timeToReach,
-                description,
-                link,
-              }: RestaurantInfo) =>
-                `
+          ${
+            displayingRestaurantInfos
+              .map(
+                ({
+                  name,
+                  category,
+                  timeToReach,
+                  description,
+                  link,
+                }: RestaurantInfo) =>
+                  `
             <restaurant-item name="${name}" category="${category}" timeToReach="${timeToReach}" description="${description}" link="${link}">
             </restaurant-item>`
-            )
-            .join("")}
+              )
+              .join("") ||
+            "<p class='no-restaurant-item-message'>등록된 식당이 없습니다.<br/> 식당을 추가해주세요 👨🏻‍🍳</p>"
+          }
         </ul>
       </section>
     `;
