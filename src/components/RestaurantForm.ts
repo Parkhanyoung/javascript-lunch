@@ -9,16 +9,18 @@ import {
 import convertObjectToOptions from "../utils/convertObjectToOptions";
 import { $ } from "../utils/selector";
 import { KOREAN_CATEGORY } from "../constants/category";
+import Restaurant, { RestaurantInfo } from "../domain/Restaurant";
+import restaurantStore from "../store/restaurantStore";
 
 customElements.define("form-item", FormItem);
 
 const distanceOptions = [
-  { value: "", label: "선택해&nbsp;주세요" },
-  { value: "5", label: "5분&nbsp;내" },
-  { value: "10", label: "10분&nbsp;내" },
-  { value: "15", label: "15분&nbsp;내" },
-  { value: "20", label: "20분&nbsp;내" },
-  { value: "30", label: "30분&nbsp;내" },
+  { value: null, label: "선택해 주세요" },
+  { value: 5, label: "5분 내" },
+  { value: 10, label: "10분 내" },
+  { value: 15, label: "15분 내" },
+  { value: 20, label: "20분 내" },
+  { value: 30, label: "30분 내" },
 ];
 
 export default class RestaurantForm extends EventComponent {
@@ -29,9 +31,11 @@ export default class RestaurantForm extends EventComponent {
       <form-item title="카테고리" required="true" label-for="category">
         <select-box
           select-id="category"
+          class-name="category-select"
           name="category"
           options=${this.generateCategoryOptions()}
           required="true"
+          label-name="카테고리"
         >
         </select-box>
       </form-item>
@@ -43,10 +47,12 @@ export default class RestaurantForm extends EventComponent {
       <form-item title="거리(도보 이동 시간)" required="true" label-for="time-to-reach">
         <select-box
           select-id="time-to-reach"
-          name="time-to-reach"
-          options=${JSON.stringify(distanceOptions)}
+          class-name="time-to-reach-select"
+          name="timeToReach"
+          options=${this.generateDistanceOptions()}
           required="true"
-        >
+          label-name="도보이동시간"
+          >
         </select-box>
       </form-item>
 
@@ -85,47 +91,64 @@ export default class RestaurantForm extends EventComponent {
     e.preventDefault();
 
     const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
 
-    const category = ($("#category") as HTMLSelectElement).value;
-    const timeToReach = ($("#time-to-reach") as HTMLSelectElement).value;
-
-    const payload = {
-      ...data,
-      category,
-      timeToReach: Number(timeToReach),
-    };
-
-    const cleanUp = () => {
-      (e.target as HTMLFormElement)?.reset();
+    try {
+      const restaurantInfo = this.extractRestaurantInfo(form);
+      const newRestaurant = new Restaurant(restaurantInfo as RestaurantInfo);
+      restaurantStore.add(newRestaurant);
 
       this.dispatchEvent(
-        new CustomEvent(MODAL_EVENT.restaurantFormModalAction, {
+        new CustomEvent(RESTAURANT_EVENT.restaurantFormSubmit, {
           bubbles: true,
-          detail: { action: MODAL_EVENT_ACTION.close },
+          detail: { newRestaurant },
         })
       );
-    };
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
+    }
 
-    this.dispatchEvent(
-      new CustomEvent(RESTAURANT_EVENT.restaurantFormSubmit, {
-        bubbles: true,
-        detail: {
-          payload,
-          cleanUp,
-        },
-      })
-    );
+    this.cleanUpSubmit(form);
   }
 
   private generateCategoryOptions() {
     return this.generateOptions(KOREAN_CATEGORY);
   }
 
+  private generateDistanceOptions() {
+    const optionsWithoutBlank = distanceOptions.map((option) => ({
+      ...option,
+      label: option.label.replace(" ", "&nbsp;"),
+    }));
+
+    return JSON.stringify(optionsWithoutBlank);
+  }
+
   private generateOptions(filterLiteralObject: Record<string, string>) {
     const filteredOptions = convertObjectToOptions(filterLiteralObject);
 
     return JSON.stringify(filteredOptions);
+  }
+
+  private extractRestaurantInfo(form: HTMLFormElement) {
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+
+    return {
+      ...data,
+      timeToReach: Number(data.timeToReach),
+    };
+  }
+
+  private cleanUpSubmit(form: HTMLFormElement) {
+    form.reset();
+
+    this.dispatchEvent(
+      new CustomEvent(MODAL_EVENT.restaurantFormModalAction, {
+        bubbles: true,
+        detail: { action: MODAL_EVENT_ACTION.close },
+      })
+    );
   }
 }

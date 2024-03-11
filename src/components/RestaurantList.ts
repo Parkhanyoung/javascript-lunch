@@ -2,11 +2,11 @@ import EventComponent from "../abstract/EventComponent";
 import RestaurantItem from "./RestaurantItem";
 import FilterBar from "./FilterBar";
 import Restaurants from "../domain/Restaurants";
-import Restaurant, { RestaurantInfo } from "../domain/Restaurant";
+import { RestaurantInfo } from "../domain/Restaurant";
 
 import { CategoryFilter, SortFilter } from "../types/Filter";
 import restaurantStore from "../store/restaurantStore";
-import { RESTAURANT_DISPLAYING_FILTER, SORT_FILTER } from "../constants/filter";
+import { CATEGORY_FILTER, SORT_FILTER } from "../constants/filter";
 import { FILTER_EVENT, RESTAURANT_EVENT } from "../constants/event";
 
 customElements.define("restaurant-item", RestaurantItem);
@@ -18,8 +18,8 @@ export default class RestaurantList extends EventComponent {
   private sortFilter: SortFilter;
 
   constructor(
-    restaurants = restaurantStore.getRestaurants(),
-    categoryFilter = RESTAURANT_DISPLAYING_FILTER.all,
+    restaurants = restaurantStore.get(),
+    categoryFilter = CATEGORY_FILTER.all,
     sortFilter = SORT_FILTER.name
   ) {
     super();
@@ -97,17 +97,10 @@ export default class RestaurantList extends EventComponent {
   }
 
   private handleRestaurantFormSubmit(event: CustomEvent) {
-    const { payload, cleanUp } = event?.detail;
+    const { newRestaurant } = event?.detail;
 
-    try {
-      const restaurant = new Restaurant(payload);
-      this.restaurants.add(restaurant);
-      restaurantStore.setRestaurnats(this.restaurants);
-    } catch (error: any) {
-      return alert(error.message);
-    }
+    this.restaurants.add(newRestaurant);
 
-    cleanUp();
     this.render();
   }
 
@@ -115,11 +108,11 @@ export default class RestaurantList extends EventComponent {
     restaurantInfos: RestaurantInfo[],
     categoryFilter: CategoryFilter
   ): RestaurantInfo[] {
-    if (!Object.keys(RESTAURANT_DISPLAYING_FILTER).includes(categoryFilter)) {
+    if (!Object.keys(CATEGORY_FILTER).includes(categoryFilter)) {
       return restaurantInfos;
     }
 
-    if (categoryFilter === RESTAURANT_DISPLAYING_FILTER.all) {
+    if (categoryFilter === CATEGORY_FILTER.all) {
       return restaurantInfos;
     }
 

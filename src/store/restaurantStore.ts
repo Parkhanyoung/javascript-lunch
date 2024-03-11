@@ -3,7 +3,7 @@ import Restaurants from "../domain/Restaurants";
 import localStore from "./localStorageStore";
 
 const restaurantStore = {
-  getRestaurants(): Restaurants {
+  get(): Restaurants {
     const restaurantInfos = localStore.getParsedItem("restaurants");
 
     if (!restaurantInfos) {
@@ -17,12 +17,19 @@ const restaurantStore = {
       return new Restaurants(restaurantsArray);
     } catch {
       localStore.reset();
-      alert("데이터 건들지 마세요!");
-      return this.getRestaurants();
+      alert("데이터가 훼손되어 식당 목록이 초기화되었습니다.");
+      return this.get();
     }
   },
 
-  setRestaurnats(restaurants: Restaurants) {
+  add(restaurant: Restaurant): void {
+    const restaurants = this.get();
+    restaurants.add(restaurant);
+
+    this.set(restaurants);
+  },
+
+  set(restaurants: Restaurants): void {
     localStore.setItem("restaurants", restaurants.getDetails());
   },
 };
